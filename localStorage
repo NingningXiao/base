@@ -1,0 +1,138 @@
+/**
+ * Created by xiaoningning on 15/10/20.
+ */
+(function(){
+   var Store = function(){
+
+   };
+   Store.prototype = {
+       init: function(){
+           this.properInit();
+           this.assert();
+       },
+       properInit: function(){
+           this.sProxy = window.localStorage;
+           this.defaultLifeTime = 60*60*60*1000; //默认生命周期为60分钟
+           this.keyCache = "SYSTEM_KEY_TIMEOUT_MAP";
+       },
+       assert: function(){
+           if(this.sProxy == null){
+               throw "浏览器不支持localstorage";
+           }
+       },
+       setKeyCache: function(key, timeout){
+            if(timeout < new Date().getTime()){
+                return;
+            }
+
+            var oldStr = this.sProxy.getItem(this.keyCache);
+            var oldMap = [];
+            //当前key是否已经存在
+            var flag = false;
+            var obj = {};
+            var tempObj = null;
+            obj.key = key;
+            obj.timeout = timeout;
+
+            if(oldStr){
+                oldMap = JSON.parse(oldStr);
+                if(!oldMap instanceof Array){
+                    oldMap = [];
+                }
+            }
+
+            for(var i = 0, len = oldMap.length; i<len; i++){
+                tempObj = oldMap[i];
+                if(tempObj.key == key){
+                    oldMap[i] = obj;
+                    flag = true;
+                }
+            }
+
+            if(!flag){
+                oldMap.push(obj);
+            }
+
+            this.sProxy.setItem(this.keyCache, JSON.stringify(oldMap));
+       },
+       set: function(key, value, timeout){
+           var date = new Date();
+           var inDate = date.getTime();
+
+           //最终保存的数据
+           var entity = null;
+
+           if(!timeout){
+               timeout = date.getTime()+this.defaultLifeTime;
+           }
+
+           this.setKeyCache(key, timeout);
+
+           //
+           entity = {
+               data: value,
+               inDate: inDate,
+               timeout: timeout
+           }
+
+           try{
+               this.sProxy.setItem(key, JSON.stringify(entity));
+               return true;
+           }catch(e){
+              if(e.name == 'QuotaExceededError'){
+                  if(!this.removeLastStorage()){
+                      throw "存储的数据量过大！";
+                  }
+                  this.set(key, value, timeout);
+              }
+              console && console.log(e);
+           }
+
+           return false;
+       },
+       get: function(key){
+           var result, now = new Date().getTime();
+
+           try{
+               result = this.sProxy.getItem(key);
+               if(!result) return null;
+
+               result = JSON.parse(result);
+
+               if(result.timeout > now){
+                   return result.data;
+               }
+
+           }catch(e){
+               console && console.log(e);
+           }
+
+           return null;
+       },
+       remove: function(key){
+           this.sProxy.removeItem(key);
+       },
+       removeLastStorage: function(){
+            //取出键值对
+            var cacheStr = this.sProxy.getItem(this.keyCache);
+            var cacheMap = [];
+            if(!cacheStr){
+                return false;
+            }
+
+           cacheMap = JSON.parse(cacheStr);
+           cacheMap.sort(function(a, b){
+               return a.timeout - b.timeout;
+           });
+
+           if(cacheMap.length>0){
+               this.remove(cacheMap[0].key);
+               cacheMap.shift();
+               this.sProxy.setItem(this.keyCache, JSON.stringify(cacheMap));
+           }
+
+           return true;
+       }
+   }
+   window.store = new Store();
+})();
