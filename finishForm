@@ -1,0 +1,28 @@
+/**
+ * Created by xiaoningning on 15/10/20.
+ */
+(function(){
+    var form = document.getElementById("js_report_form");
+
+    var data = {
+        name: "xiaoningni",
+        idNum: "522635198101135012",
+        sex: "0",
+        mobile: "18700916789",
+        age: 12,
+        email: "xiao@126.com",
+        qq: "6897900",
+        userProvince: "北京",
+        userCity: "北京",
+        UserAddress: "1212hsihdihsd",
+        swindleTime: new Date().getTime(),
+        'swindleUrl[0]': 'http://baidu.com',
+        swindleType: '网址诈骗',
+        swindleUrlSource: 19,
+        swindleAmount: '2000',
+        swindleInfo: '请详细描述您的被骗经历，有助于我们快速为您审核,请详细描述您的被骗经历，有助于我们快速为您审核,请详细描述您的被骗经历，有助于我们快速为您审核,请详细描述您的被骗经历，有助于我们快速为您审核,请详细描述您的被骗经历，有助于我们快速为您审核,请详细描述您的被骗经历，有助于我们快速为您审核'
+    }
+    for(var name in data){
+        form[name].value = data[name];
+    }
+})();
